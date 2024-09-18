@@ -1,0 +1,294 @@
+HELLO, 
+
+I did create this file to make it easier for me since i cannot run all that code at once, 
+im still not at that point of code, so my easy way is to fragment it by parts and try it.
+all the 5 modules did work for me. this is in case that my excel file has any inconvenient.
+
+Thank you.
+
+Felipe Suarez 
+
+
+MODULE 1 TICKER WITHOUT REPETING ON COLUMN "i" ------------------------------------------------------------------------------------------------------------------------------------
+
+Sub OutputUniqueTickersInQ1ColumnI()
+
+    Dim ws As Worksheet
+    Dim lastRow As Long
+    Dim ticker As String
+    Dim i As Long
+    Dim outputRow As Long
+    Dim uniqueTickers As Collection
+    Dim q1Sheet As Worksheet
+    
+    ' Set the Q1 sheet where we will write the unique tickers
+    Set q1Sheet = ThisWorkbook.Sheets("Q1")
+    
+    ' Find the last row with data in Q1's Column A (assuming ticker is in column A)
+    lastRow = q1Sheet.Cells(q1Sheet.Rows.Count, 1).End(xlUp).Row
+    
+    ' Create a collection to store unique tickers (collections automatically prevent duplicates)
+    Set uniqueTickers = New Collection
+    On Error Resume Next ' To prevent errors when trying to add duplicates
+    
+    ' Loop through each row in Q1 to get the ticker symbol from Column A
+    For i = 2 To lastRow ' Start at row 2 to skip the header
+        ticker = q1Sheet.Cells(i, 1).Value ' Assuming the ticker symbol is in column A
+        
+        ' Add ticker to the collection if it is not already present
+        uniqueTickers.Add ticker, CStr(ticker)
+    Next i
+    On Error GoTo 0 ' Turn off error handling
+    
+    ' Now write all unique tickers to Column I in Q1
+    outputRow = 2 ' Start writing in row 2 of Column I (skipping the header row)
+    
+    For i = 1 To uniqueTickers.Count
+        q1Sheet.Cells(outputRow, 9).Value = uniqueTickers(i) ' Write the unique ticker to Column I (9th column)
+        outputRow = outputRow + 1 ' Move to the next row for output
+    Next i
+
+End Sub
+
+
+MODULE 2 QUARTERLY CHANGE COLUMN "j" ----------------------------------------------------------------------------------------------------------------------------------
+
+Sub CalculateQuarterlyChangeInQ1()
+
+    Dim ws As Worksheet
+    Dim lastRow As Long
+    Dim firstOpenPrice As Double
+    Dim lastClosePrice As Double
+    Dim quarterlyChange As Double
+    Dim currentTicker As String
+    Dim uniqueTickers As Collection
+    Dim i As Long
+    Dim outputRow As Long
+    
+    ' Set the Q1 worksheet
+    Set ws = ThisWorkbook.Sheets("Q1")
+    
+    ' Find the last row with data in Column A (ticker column)
+    lastRow = ws.Cells(ws.Rows.Count, 1).End(xlUp).Row
+    
+    ' Create a collection to store unique tickers
+    Set uniqueTickers = New Collection
+    On Error Resume Next ' Prevent errors when adding duplicate tickers to the collection
+    
+    ' Loop through each row in Q1 to collect unique tickers from Column A
+    For i = 2 To lastRow ' Start at row 2, skipping the header
+        currentTicker = ws.Cells(i, 1).Value ' Get the ticker symbol from Column A
+        uniqueTickers.Add currentTicker, CStr(currentTicker) ' Add ticker to collection (unique values)
+    Next i
+    On Error GoTo 0 ' Turn off error handling after collection
+    
+    ' Now calculate and output quarterly change in Column J
+    outputRow = 2 ' Start writing results in row 2 of Column J
+    
+    For i = 1 To uniqueTickers.Count
+        currentTicker = uniqueTickers(i)
+        
+        ' Find the first and last rows for this ticker
+        firstOpenPrice = ws.Cells(Application.Match(currentTicker, ws.Range("A:A"), 0), 3).Value ' First open price (Column C)
+        lastClosePrice = ws.Cells(Application.Match(currentTicker, ws.Range("A:A"), 1), 6).Value ' Last close price (Column F)
+        
+        ' Calculate the quarterly change
+        quarterlyChange = lastClosePrice - firstOpenPrice
+        
+        ' Write the quarterly change in Column J
+        ws.Cells(outputRow, 10).Value = quarterlyChange ' Write to Column J (10th column)
+        
+        ' Move to the next row for the next unique ticker
+        outputRow = outputRow + 1
+    Next i
+    
+End Sub
+
+
+MODULE 3 PERCENTAGE CHANGE COLUMN "k" -------------------------------------------------------------------------------------------------------------------------------------
+
+Sub CalculatePercentageChangeInQ1()
+
+    Dim ws As Worksheet
+    Dim lastRow As Long
+    Dim firstOpenPrice As Double
+    Dim lastClosePrice As Double
+    Dim percentageChange As Double
+    Dim currentTicker As String
+    Dim uniqueTickers As Collection
+    Dim i As Long
+    Dim outputRow As Long
+    
+    ' Set the Q1 worksheet
+    Set ws = ThisWorkbook.Sheets("Q1")
+    
+    ' Find the last row with data in Column A (ticker column)
+    lastRow = ws.Cells(ws.Rows.Count, 1).End(xlUp).Row
+    
+    ' Create a collection to store unique tickers
+    Set uniqueTickers = New Collection
+    On Error Resume Next ' Prevent errors when adding duplicate tickers to the collection
+    
+    ' Loop through each row in Q1 to collect unique tickers from Column A
+    For i = 2 To lastRow ' Start at row 2, skipping the header
+        currentTicker = ws.Cells(i, 1).Value ' Get the ticker symbol from Column A
+        uniqueTickers.Add currentTicker, CStr(currentTicker) ' Add ticker to collection (unique values)
+    Next i
+    On Error GoTo 0 ' Turn off error handling after collection
+    
+    ' Now calculate and output percentage change in Column K
+    outputRow = 2 ' Start writing results in row 2 of Column K
+    
+    For i = 1 To uniqueTickers.Count
+        currentTicker = uniqueTickers(i)
+        
+        ' Find the first and last rows for this ticker
+        firstOpenPrice = ws.Cells(Application.Match(currentTicker, ws.Range("A:A"), 0), 3).Value ' First open price (Column C)
+        lastClosePrice = ws.Cells(Application.Match(currentTicker, ws.Range("A:A"), 1), 6).Value ' Last close price (Column F)
+        
+        ' Calculate the percentage change
+        If firstOpenPrice <> 0 Then ' Avoid division by zero
+            percentageChange = ((lastClosePrice - firstOpenPrice) / firstOpenPrice) * 100
+        Else
+            percentageChange = 0 ' Set to 0 if the open price is zero to avoid division error
+        End If
+        
+        ' Write the percentage change in Column K
+        ws.Cells(outputRow, 11).Value = percentageChange ' Write to Column K (11th column)
+        
+        ' Move to the next row for the next unique ticker
+        outputRow = outputRow + 1
+    Next i
+
+End Sub
+
+
+MODULE 4 TOTAL STOCK VOLUME COLUMN "L" ---------------------------------------------------------------------------------------------------------------------------------------
+
+Sub CalculateTotalStockVolumeInQ1()
+
+    Dim ws As Worksheet
+    Dim lastRow As Long
+    Dim currentTicker As String
+    Dim totalVolume As Double
+    Dim uniqueTickers As Collection
+    Dim i As Long
+    Dim outputRow As Long
+    
+    ' Set the Q1 worksheet
+    Set ws = ThisWorkbook.Sheets("Q1")
+    
+    ' Find the last row with data in Column A (ticker column)
+    lastRow = ws.Cells(ws.Rows.Count, 1).End(xlUp).Row
+    
+    ' Create a collection to store unique tickers
+    Set uniqueTickers = New Collection
+    On Error Resume Next ' Prevent errors when adding duplicate tickers to the collection
+    
+    ' Loop through each row in Q1 to collect unique tickers from Column A
+    For i = 2 To lastRow ' Start at row 2, skipping the header
+        currentTicker = ws.Cells(i, 1).Value ' Get the ticker symbol from Column A
+        uniqueTickers.Add currentTicker, CStr(currentTicker) ' Add ticker to collection (unique values)
+    Next i
+    On Error GoTo 0 ' Turn off error handling after collection
+    
+    ' Now calculate and output total stock volume in Column L
+    outputRow = 2 ' Start writing results in row 2 of Column L
+    
+    For i = 1 To uniqueTickers.Count
+        currentTicker = uniqueTickers(i)
+        
+        ' Reset total volume for each ticker
+        totalVolume = 0
+        
+        ' Loop through all rows to sum up the total volume for the current ticker
+        For j = 2 To lastRow
+            If ws.Cells(j, 1).Value = currentTicker Then
+                totalVolume = totalVolume + ws.Cells(j, 7).Value ' Add the volume (Column G)
+            End If
+        Next j
+        
+        ' Write the total volume for the ticker in Column L
+        ws.Cells(outputRow, 12).Value = totalVolume ' Write to Column L (12th column)
+        
+        ' Move to the next row for the next unique ticker
+        outputRow = outputRow + 1
+    Next i
+
+End Sub
+
+MODULE 5 Greatest % increase", "Greatest % decrease", and "Greatest total volume" ------------------------------------------------------------------------------------------------
+
+Sub FindGreatestIncreaseDecreaseAndVolume()
+
+    Dim ws As Worksheet
+    Dim lastRow As Long
+    Dim maxPercentIncrease As Double
+    Dim maxPercentIncreaseTicker As String
+    Dim maxPercentDecrease As Double
+    Dim maxPercentDecreaseTicker As String
+    Dim maxTotalVolume As Double
+    Dim maxTotalVolumeTicker As String
+    Dim i As Long
+    Dim currentPercentChange As Double
+    Dim currentTotalVolume As Double
+    
+    ' Set the Q1 worksheet
+    Set ws = ThisWorkbook.Sheets("Q1")
+    
+    ' Find the last row with data in Column I (ticker column)
+    lastRow = ws.Cells(ws.Rows.Count, 9).End(xlUp).Row
+    
+    ' Initialize variables for the greatest % increase, % decrease, and total volume
+    maxPercentIncrease = -999999
+    maxPercentDecrease = 999999
+    maxTotalVolume = 0
+    
+    ' Loop through each row with data in Columns K (percentage change) and L (total volume)
+    For i = 2 To lastRow
+        ' Get the current percentage change from Column K
+        currentPercentChange = ws.Cells(i, 11).Value
+        
+        ' Check for greatest percentage increase
+        If currentPercentChange > maxPercentIncrease Then
+            maxPercentIncrease = currentPercentChange
+            maxPercentIncreaseTicker = ws.Cells(i, 9).Value ' Get the ticker from Column I
+        End If
+        
+        ' Check for greatest percentage decrease
+        If currentPercentChange < maxPercentDecrease Then
+            maxPercentDecrease = currentPercentChange
+            maxPercentDecreaseTicker = ws.Cells(i, 9).Value ' Get the ticker from Column I
+        End If
+        
+        ' Get the current total volume from Column L
+        currentTotalVolume = ws.Cells(i, 12).Value
+        
+        ' Check for greatest total volume
+        If currentTotalVolume > maxTotalVolume Then
+            maxTotalVolume = currentTotalVolume
+            maxTotalVolumeTicker = ws.Cells(i, 9).Value ' Get the ticker from Column I
+        End If
+    Next i
+    
+    ' Output the results in a new section (e.g., starting from Column N)
+    ws.Cells(1, 14).Value = "Ticker"
+    ws.Cells(1, 15).Value = "Value"
+    
+    ws.Cells(2, 14).Value = "Greatest % Increase"
+    ws.Cells(2, 15).Value = maxPercentIncreaseTicker
+    ws.Cells(2, 16).Value = Format(maxPercentIncrease, "0.00%")
+    
+    ws.Cells(3, 14).Value = "Greatest % Decrease"
+    ws.Cells(3, 15).Value = maxPercentDecreaseTicker
+    ws.Cells(3, 16).Value = Format(maxPercentDecrease, "0.00%")
+    
+    ws.Cells(4, 14).Value = "Greatest Total Volume"
+    ws.Cells(4, 15).Value = maxTotalVolumeTicker
+    ws.Cells(4, 16).Value = maxTotalVolume
+    
+End Sub
+
+MODULE 6 CONDITIONAL COLOR FORMATING CHANGE ------------------------------------------------------------------------------------------------------------------------
+
+It was applied throug excel formating condition creating two rules for the different Colors.
